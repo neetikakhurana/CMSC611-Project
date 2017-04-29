@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.util.Formatter;
 import java.util.Scanner;
 
+import com.nitika.functionalUnit.Status;
 import com.nitika.parsers.ConfigParser;
-import com.nitika.parsers.DataParser;
 import com.nitika.parsers.InstParser;
 import com.nitika.scoreboard.CalcScoreboard;
 
@@ -25,8 +25,8 @@ public class Simulator {
 	public static String configTxt="";
 	public static String resultTxt="";
 	public static Formatter scoreBoard;
-	public static int totalInst=0;
-	public static int fetch[], read[], issue[], execute[], write[], data[];
+	public static int totalInst=0, cycle=0;
+	public static int fetch[], read[], issue[], execute[], write[], data[], instType[];
 	public static String memory[][], RAW[], WAW[], STRUCT[], WAR[];
 	public static int nfpAdder=0, nfpMult=0, nfpDiv=0, fpAddEx=0, fpMulEx=0, fpDivEx=0, nbIcache=0, bsizeIcache=0, nIntU=1;
 	
@@ -35,9 +35,10 @@ public class Simulator {
 		getInput();
 		intializeResultTxt();
 		initiateDefaultValues();
+		Status.initializeFUStatusPara();
 		InstParser.parseInstructions(instTxt);
 		ConfigParser.parseConfigurations(configTxt);
-		DataParser.parseData(dataTxt);
+//		DataParser.parseData(dataTxt);
 		
 		CalcScoreboard.calculate();
 		

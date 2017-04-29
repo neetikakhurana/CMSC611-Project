@@ -63,4 +63,46 @@ public class InstParser {
 		}
 		return inst;
 	}
+	
+	public static String getBranchSourceLabel(int instNo){
+		return Simulator.memory[instNo][4];
+	}
+	
+	public static String getSource1(int instNo){
+		return Simulator.memory[instNo][3];
+	}
+	
+	public static String getLDSource(int instNo){
+		String indexedAdd[]=new String[2];
+		indexedAdd=Simulator.memory[instNo][3].split("(");
+		String temp[]=new String[2];
+		temp=indexedAdd[2].split(")");
+		indexedAdd[1]=temp[0];
+		return indexedAdd[1];
+	}
+	
+	public static String getSource2(int instNo){
+		return Simulator.memory[instNo][4];
+	}
+	
+	public static int getIncDecValue(int instNo){
+		return Integer.parseInt(Simulator.memory[instNo][4].toString());
+	}
+	
+	public static int getLIValue(int instNo){
+		return Integer.parseInt(Simulator.memory[instNo][3].toString());
+	}
+	
+	public static String getStoreDest(int instNo){
+		String indexedAdd[]=new String[2];
+		indexedAdd=Simulator.memory[instNo][3].split("(");
+		String temp[]=new String[2];
+		temp=indexedAdd[2].split(")");
+		indexedAdd[1]=temp[0];
+		return indexedAdd[1];
+	}
+	
+	public static String getStoreSource(int instNo){
+		return Simulator.memory[instNo][3];
+	}
 }
