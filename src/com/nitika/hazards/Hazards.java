@@ -2,9 +2,10 @@ package com.nitika.hazards;
 
 import com.nitika.constants.ApplicationConstants;
 import com.nitika.main.Simulator;
+import com.nitika.pipeline.Stages;
 
 public class Hazards {
-	
+	public static int loads=1;
 	//check for structural hazards
 	public static boolean structural(int inst){
 		String instType=Simulator.memory[inst][1];
@@ -38,9 +39,19 @@ public class Hazards {
 				return true;
 			}
 		}
-		else if((instType.matches(ApplicationConstants.LW)) || (instType.matches(ApplicationConstants.SW)) || (instType.matches(ApplicationConstants.LD)) || (instType.matches(ApplicationConstants.SD)) || (instType.matches(ApplicationConstants.HLT)) || (instType.matches(ApplicationConstants.BNE)) || (instType.matches(ApplicationConstants.BEQ)) || (instType.matches(ApplicationConstants.J))){
+		else if((instType.matches(ApplicationConstants.HLT)) || (instType.matches(ApplicationConstants.BNE)) || (instType.matches(ApplicationConstants.BEQ)) || (instType.matches(ApplicationConstants.J))){
 			//no hazard
 			return false;
+		}
+		else if((instType.matches(ApplicationConstants.LW)) || (instType.matches(ApplicationConstants.SW)) || (instType.matches(ApplicationConstants.LD)) || (instType.matches(ApplicationConstants.SD))){
+			if(loads>0){
+				//no hazard
+				return false;
+			}
+			else{
+				Simulator.STRUCT[inst]="Y";
+				return true;
+			}
 		}
 		else{
 			if(Simulator.nIntU>0){
@@ -62,25 +73,38 @@ public class Hazards {
 		}
 		else
 		{
-			for(int i=0;i<instruction;i++){
+			if(Stages.writeIncomplete==0){
+				if((Simulator.memory[Stages.writeIncomplete][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[Stages.writeIncomplete][2].equalsIgnoreCase(Simulator.memory[instruction][4]))){
+					Simulator.RAW[instruction]="Y";
+					return true;
+				}else{
+					//no previous instruction uses the same destination
+					return false;
+				}
+			}
+			for(int i=Stages.writeIncomplete;i<instruction;i++){
 			//some previous instruction is writing to this source register
 				//this would again be instruction type wise
 				//if both blank, then skip(so check it)
-				if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][4]))){
-					if(Simulator.execute[i]!=0){
-						//previous one is active i.e. results have not been written yet
-						//wait till it completes execution
-						Simulator.RAW[instruction]="Y";
-						return true;
+				if(Simulator.write[i]==0){
+					if((!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BEQ)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BNE)) ){ 
+						if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][4]))){
+							Simulator.RAW[instruction]="Y";
+							return true;
+						}else{
+							//no previous instruction uses the same destination
+							continue;
+						}
 					}
 					else{
-						//previous one has finished execution
-						return false;
+						if((Simulator.registers.get(Simulator.memory[i][2])==(Simulator.registers.get(Simulator.memory[instruction][2]))) || (Simulator.registers.get(Simulator.memory[i][2])==(Simulator.registers.get(Simulator.memory[instruction][3])))){
+							Simulator.RAW[instruction]="Y";
+							return true;
+						}else{
+							//no previous instruction uses the same destination
+							continue;
+						}
 					}
-				}
-				else{
-					//no previous instruction uses the same destination
-					return false;
 				}
 			}
 			return false;
@@ -96,32 +120,37 @@ public class Hazards {
 		}
 		else
 		{
-			for(int i=0;i<instruction;i++){
-			//some previous instruction is using this destination register
-				//if((!Simulator.memory[i][1].matches(ApplicationConstants.SD)) || (!Simulator.memory[i][1].matches(ApplicationConstants.SW))){
-					if(Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][2])){
-						if(Simulator.execute[i]!=0){
-							//previous one is active i.e. results have not been written yet
-							//wait till it completes execution
+			if(Stages.writeIncomplete==0){
+				if((Simulator.memory[Stages.writeIncomplete][2].equalsIgnoreCase(Simulator.memory[instruction][2]))){
+					Simulator.WAW[instruction]="Y";
+					return true;
+				}else{
+					//no previous instruction uses the same destination
+					return false;
+				}
+			}
+			for(int i=Stages.writeIncomplete;i<instruction;i++){
+			//some previous instruction is writing to this source register
+				//this would again be instruction type wise
+				//if both blank, then skip(so check it)
+				if(Simulator.write[i]==0){
+						//this should be the case for all instructions except branching ones
+					if((!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BEQ)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BNE)) ){ 
+						if(Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][2])){
 							Simulator.WAW[instruction]="Y";
 							return true;
-						}
-						else{
-							//previous one has finished execution
-							return false;
+						}else{
+							//no previous instruction uses the same destination
+							continue;
 						}
 					}
 					else{
-						//no previous instruction uses the same destination
 						return false;
 					}
 				}
-				//else
-				//{
-					//if(Simulator.memory[i][2])
-				//}
-			//}
+			}
 			return false;
+			
 		}
 	}
 }

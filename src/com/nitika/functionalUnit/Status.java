@@ -14,7 +14,7 @@ public class Status {
 	public static String rj[]=new String[5];
 	public static String rk[]=new String[5];
 
-	public static int fUnit[]=new int[5];
+	public static int fUnit[]=new int[Simulator.totalInst];
 	
 	//call it only after total instructions have been determined i.e. inst.txt has been parsed
 	public static void initializeFUStatusPara(){

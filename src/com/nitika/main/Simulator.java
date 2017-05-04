@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Formatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import com.nitika.functionalUnit.Status;
@@ -29,6 +31,7 @@ public class Simulator {
 	public static int fetch[], read[], issue[], execute[], write[], data[], instType[];
 	public static String memory[][], RAW[], WAW[], STRUCT[], WAR[];
 	public static int nfpAdder=0, nfpMult=0, nfpDiv=0, fpAddEx=0, fpMulEx=0, fpDivEx=0, nbIcache=0, bsizeIcache=0, nIntU=1;
+	public static Map<String, Integer> registers=new HashMap<String, Integer>();
 	
 	public static void main(String[] args) throws IOException,FileNotFoundException {
 		
@@ -41,7 +44,13 @@ public class Simulator {
 //		DataParser.parseData(dataTxt);
 		
 		CalcScoreboard.calculate();
-		
+		CalcScoreboard.writeResultToFile();
+		scoreBoard.format("%n%nTotal number of access requests for instruction cache: %n");
+	    scoreBoard.format("Number of instruction cache hits:  %d %n", 0);
+	    scoreBoard.format("Total number of access requests for data cache:  %d %n", 0);
+	    scoreBoard.format("Number of data cache hits:  %d %n", 0);
+	    scoreBoard.close();
+
 	}
 	
 	//get input from command line
@@ -118,7 +127,7 @@ public class Simulator {
 		execute=new int[noInst];
 		write=new int[noInst];
 		totalInst=noInst;
-		memory=new String[noInst][5];
+		memory=new String[50][5];
 		data=new int[noInst];
 		RAW=new String[noInst];
 		WAW=new String[noInst];

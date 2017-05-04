@@ -2,6 +2,7 @@ package com.nitika.functionalUnit;
 
 import com.nitika.constants.ApplicationConstants;
 import com.nitika.enums.FunctionalUnit;
+import com.nitika.hazards.Hazards;
 import com.nitika.main.Simulator;
 
 public class Available {
@@ -29,6 +30,10 @@ public class Available {
 		else if ((Simulator.memory[instNo][1].contains(ApplicationConstants.LI)) || (Simulator.memory[instNo][1].matches(ApplicationConstants.DADD)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DADDI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DSUB)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DSUBI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.LUI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.ANDI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.ORI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.AND))) {
 			Simulator.nIntU--;
 			Status.fUnit[instNo]=FunctionalUnit.INTEGERUNIT.getId();
+		}
+		else if((Simulator.memory[instNo][1].contains(ApplicationConstants.LD)) || (Simulator.memory[instNo][1].contains(ApplicationConstants.SD)) || (Simulator.memory[instNo][1].contains(ApplicationConstants.LW)) || (Simulator.memory[instNo][1].contains(ApplicationConstants.SW))){
+			Hazards.loads--;
+			Status.fUnit[instNo]=5;
 		}
 		else{
 			Status.fUnit[instNo]=4; //if instr doesnt use any of the FU
@@ -65,6 +70,14 @@ public class Available {
 		else if ((Simulator.memory[instNo][1].contains(ApplicationConstants.LI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DADD)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DADDI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DSUB)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.DSUBI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.LUI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.ANDI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.ORI)) || (Simulator.memory[instNo][1].equals(ApplicationConstants.AND))) {
 			if(Simulator.nIntU!=oIntU){
 				Simulator.nIntU++;
+			}
+			else{
+				//functional unit is released already
+			}
+		}
+		else if(((Simulator.memory[instNo][1].contains(ApplicationConstants.SW)) || (Simulator.memory[instNo][1].contains(ApplicationConstants.LW)) || (Simulator.memory[instNo][1].contains(ApplicationConstants.LD)) || (Simulator.memory[instNo][1].contains(ApplicationConstants.SD)))){
+			if(Hazards.loads!=1){
+				Hazards.loads++;
 			}
 			else{
 				//functional unit is released already
