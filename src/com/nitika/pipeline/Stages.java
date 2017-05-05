@@ -90,16 +90,28 @@ public class Stages {
 				
 		//uses a register file
 		//check for RAW
+		if(Branch.onBranch(instNo)==2){
+			//branch instruction has been so stall the later instructions
+			CalcScoreboard.branchInProgress=true;
+		}
+		
 		if(!Hazards.RAW(instNo)){
 		//increment the cycle number if there are no hazards
 			Simulator.read[instNo]=CalcScoreboard.fetchControl;
 			if(Branch.onBranch(instNo)==2){
 				//BEQ or BNE (and they should not go beyond this point)
+				Simulator.execute[instNo]=-1;
+				Simulator.write[instNo]=-1;
+				CalcScoreboard.branchInProgress=false;
 				if(Branch.onBEQBNE(instNo)){
-					//we need to do flushing
+					
+					//if it return true, then that means let the next instruction continue
+					//we need not to do flushing (or rather anything at all)
 				}
 				else{
-					//continue with next instruction
+					System.out.println("The condition turned out to be true..Going to new label");
+					//CalcScoreboard.fetchControl++;
+					//continue with the newly fetched labelled instruction
 				}
 			}
 		}
@@ -134,6 +146,9 @@ public class Stages {
 				break;
 			}
 		}
+		
+		//************************check if thsi works on adding new instr on branch********************coz branch and halt will never complete******************8
+		
 		//if there is an incomplete instruction in between
 		if(instNo!=0 && r!=0)
 			writeIncomplete=i;
@@ -326,7 +341,7 @@ public class Stages {
 			OR.result(instNo);
 			return 1;
 		}
-		else if ((Simulator.memory[instNo][1].matches(ApplicationConstants.LI))){
+		else if ((Simulator.memory[instNo][1].contains(ApplicationConstants.LI))){
 			LI.result(instNo);
 			return 1;
 		}

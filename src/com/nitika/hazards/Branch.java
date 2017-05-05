@@ -3,10 +3,14 @@ package com.nitika.hazards;
 import java.security.AllPermission;
 
 import com.nitika.constants.ApplicationConstants;
+import com.nitika.data.Registers;
 import com.nitika.main.Simulator;
+import com.nitika.pipeline.Stages;
 import com.nitika.scoreboard.CalcScoreboard;
 
 public class Branch {
+	
+	public static int found=0;
 
 	//just check if its a branch instruction or not
 	public static boolean branch(int instNo){
@@ -45,56 +49,92 @@ public class Branch {
 		}
 	}
 	
+	
+	//************make sure to move the HLT instruction later if you are adding new instructions********************
 	public static boolean onBEQBNE(int instNo){
+		
 		if(Simulator.memory[instNo][1].equals(ApplicationConstants.BEQ)){
-			if(Simulator.memory[instNo][2].equals(Simulator.memory[instNo][3])){
-				int found=0;
+			//branch condition is true and we need to jump to the label
+			if(Registers.getValue(Simulator.memory[instNo][2])==Registers.getValue(Simulator.memory[instNo][3])){
+				//the last fetched instruction after the branch is ignored here ****REMEMBER TO INCLUDE THAT AS WELL****
+				CalcScoreboard.writeResultToFile(found,instNo+1);
 				for(int i=0;i<CalcScoreboard.Allfetch.size();i++){
 					if(Simulator.memory[i][0].matches(Simulator.memory[instNo][4])){
 						//find the instruction associated with the label
-						Simulator.memory[instNo+1]=Simulator.memory[i];
-						//Simulator.totalInst++;
 						found=i;
 						break;
 					}
 				}
+				if(Simulator.fetch[instNo+1]!=0){
+					//next instruction has already been fetched
+					System.out.println("next instruction has already been fetched");
+				}
+				
+				//**************************correct till here**********************************************
 				int k=instNo+2;
-				for(int j=found+1;j<CalcScoreboard.Allfetch.size();j++){
-					//add all instructions after the label into the memory array for in order to be executed
+				for(int j=found;j<Simulator.totalInst;j++){
+					//load all instructions into the memory array
 					Simulator.memory[k]=Simulator.memory[j];
 					k++;
 				}
+				
+				
+				//new instr added to memory********************
+				
+			
+			}
+			else
+			{
+				//values are equal, continue with the next instruction that has already been fetched
+				return true;
 			}
 		}
 		else	
 		{
-			if(!Simulator.memory[instNo][2].equals(Simulator.memory[instNo][3])){
-				int found=0;
+			if(Registers.getValue(Simulator.memory[instNo][2])!=Registers.getValue(Simulator.memory[instNo][3])){
+				//the last fetched instruction after the branch is ignored here ****REMEMBER TO INCLUDE THAT AS WELL****
+				CalcScoreboard.writeResultToFile(found,instNo+1);
 				for(int i=0;i<CalcScoreboard.Allfetch.size();i++){
 					if(Simulator.memory[i][0].matches(Simulator.memory[instNo][4])){
 						//find the instruction associated with the label
-						Simulator.memory[instNo+1]=Simulator.memory[i];
-						//Simulator.totalInst++;
 						found=i;
 						break;
 					}
 				}
-				int k=instNo+2;
-				for(int j=found+1;j<CalcScoreboard.Allfetch.size();j++){
-					//add all instructions after the label into the memory array for in order to be executed
-					Simulator.memory[k]=Simulator.memory[j];
-					k++;
+				
+				if(Simulator.fetch[instNo+1]!=0){
+					//next instruction has already been fetched
+					System.out.println("next instruction has already been fetched");
 				}
+				
+				//**************************correct till here**********************************************
+				//int k=0;
+				for(int j=found;j<Simulator.totalInst;j++){
+					//load all instructions into the memory array
+//					Simulator.memory[k]=Simulator.memory[j];
+//					k++;
+					Simulator.fetch[j]=0;
+					Simulator.issue[j]=0;
+					Simulator.read[j]=0;
+					Simulator.execute[j]=0;
+					Simulator.write[j]=0;
+				}
+				
+				Stages.writeIncomplete=found;
+				//new instr added to memory********************
+				
+				
+				//now, the writeincomplete should also be updated so that it now starts from the next instruction fed into the memory?????
+				
+				
+				
 				//values are unequal so we need to go to the label (use Allfetch)
-				/*if(Simulator.fetch[instNo+1]!=0 && Simulator.fetch[instNo+2]!=0){
-					//flush these two instructions
-					return true;
-				}*/
+				
 			}
 			else
 			{
-				//values are equal, continue with the next instruction
-				return false;
+				//values are equal, continue with the next instruction that has already been fetched
+				return true;
 			}
 		}
 		return false;
