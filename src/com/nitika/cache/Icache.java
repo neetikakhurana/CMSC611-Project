@@ -8,7 +8,7 @@ public class Icache {
 	public static int iCacheMiss=0;
 	public static int HitRate=1;
 	public static int MMaccessTime=3;
-	public static int delay=0;
+	public static int delay=-1;
 	public static int iCache[][]=new int[Simulator.nbIcache][Simulator.bsizeIcache];
 	public static int instInIcache(int instNo){
 		
@@ -21,7 +21,7 @@ public class Icache {
 		}
 		int blockNo=instNo/(Simulator.nbIcache);
 		int blockOffset=instNo%Simulator.bsizeIcache;
-		if(delay==0){
+		if(delay==-1){
 			delay=(Simulator.bsizeIcache*MMaccessTime);
 		}
 		//if the instruction is available in cache and update cache hit counter iCacheHit++
@@ -35,7 +35,7 @@ public class Icache {
 			//and return the cycle number
 			iCacheMiss++;
 			delay--;
-			if(delay==0){
+			if(delay==-1){
 				iCache[blockNo][blockOffset]=instNo;
 				iCache[blockNo][blockOffset+1]=instNo+1;
 				iCache[blockNo][blockOffset+2]=instNo+2;

@@ -1,56 +1,34 @@
 package com.nitika.functionalUnit;
 
+import com.nitika.constants.ApplicationConstants;
+import com.nitika.enums.FunctionalUnit;
 import com.nitika.main.Simulator;
 
 public class Status {
 
-	public static String busy[]=new String[5];
-	public static String fi[]=new String[5];
-	public static String fj[]=new String[5];
-	public static String fk[]=new String[5];
-	public static String qj[]=new String[5];
-	public static String qk[]=new String[5];
-	public static String op[]=new String[5];
-	public static String rj[]=new String[5];
-	public static String rk[]=new String[5];
-
 	public static int fUnit[]=new int[Simulator.totalInst];
 	
 	//call it only after total instructions have been determined i.e. inst.txt has been parsed
-	public static void initializeFUStatusPara(){
-		for(int i=0;i<4;i++){
-			busy[i]="N";
-			op[i]="";
-			fi[i]="";
-			fj[i]="";
-			fk[i]="";
-			qj[i]="";
-			qk[i]="";
-			rj[i]="";
-			rk[i]="";
-		}
-	}
-	
-	public static void assignFUPara(int instNo){
-		if(fUnit[instNo]==4){
-			//it does not use any fucntional unit so just pass
-		}
-		else
-		{
-			//this will change for every type of instruction
-			//ignoring qj and qk for sometime
-			busy[fUnit[instNo]]="Y";
-			op[fUnit[instNo]]=Simulator.memory[instNo][1];
-			fi[fUnit[instNo]]=Simulator.memory[instNo][2];//destination value
-			fj[fUnit[instNo]]=Simulator.memory[instNo][3];//source1
-			fk[fUnit[instNo]]=Simulator.memory[instNo][4];//source2
-			if(fk[fUnit[instNo]]!=""){
-				rk[fUnit[instNo]]="Y";
+	public static void functional(){
+		for(int i=0;i<Simulator.totalInst;i++){
+			if((Simulator.memory[i][1].equals(ApplicationConstants.SUBD)) || (Simulator.memory[i][1].equals(ApplicationConstants.ADDD))){
+				Status.fUnit[i]=FunctionalUnit.FPADDER.getId();
 			}
-			if(fj[fUnit[instNo]]!=""){
-				rj[fUnit[instNo]]="Y";
+			else if((Simulator.memory[i][1].equals(ApplicationConstants.MULTD))){
+				Status.fUnit[i]=FunctionalUnit.FPMULTIPLIER.getId();
+			}
+			else if((Simulator.memory[i][1].equals(ApplicationConstants.DIVD))){
+				Status.fUnit[i]=FunctionalUnit.FPDIVIDER.getId();
+			}
+			else if ((Simulator.memory[i][1].contains(ApplicationConstants.LI)) || (Simulator.memory[i][1].matches(ApplicationConstants.DADD)) || (Simulator.memory[i][1].equals(ApplicationConstants.DADDI)) || (Simulator.memory[i][1].equals(ApplicationConstants.DSUB)) || (Simulator.memory[i][1].equals(ApplicationConstants.DSUBI)) || (Simulator.memory[i][1].equals(ApplicationConstants.LUI)) || (Simulator.memory[i][1].equals(ApplicationConstants.ANDI)) || (Simulator.memory[i][1].equals(ApplicationConstants.ORI)) || (Simulator.memory[i][1].equals(ApplicationConstants.AND))) {
+				Status.fUnit[i]=FunctionalUnit.INTEGERUNIT.getId();
+			}
+			else if((Simulator.memory[i][1].contains(ApplicationConstants.LD)) || (Simulator.memory[i][1].contains(ApplicationConstants.SD)) || (Simulator.memory[i][1].contains(ApplicationConstants.LW)) || (Simulator.memory[i][1].contains(ApplicationConstants.SW))){
+				Status.fUnit[i]=5;
+			}
+			else{
+				Status.fUnit[i]=4; //if instr doesnt use any of the FU
 			}
 		}
 	}
-	
 }

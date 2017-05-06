@@ -74,9 +74,9 @@ public class InstParser {
 	
 	public static String getLDSource(int instNo){
 		String indexedAdd[]=new String[2];
-		indexedAdd=Simulator.memory[instNo][3].split("(");
+		indexedAdd=Simulator.memory[instNo][3].split("\\(");
 		String temp[]=new String[2];
-		temp=indexedAdd[2].split(")");
+		temp=indexedAdd[1].split("\\)");
 		indexedAdd[1]=temp[0];
 		return indexedAdd[1];
 	}
@@ -95,9 +95,9 @@ public class InstParser {
 	
 	public static String getStoreDest(int instNo){
 		String indexedAdd[]=new String[2];
-		indexedAdd=Simulator.memory[instNo][3].split("(");
+		indexedAdd=Simulator.memory[instNo][3].split("\\(");
 		String temp[]=new String[2];
-		temp=indexedAdd[2].split(")");
+		temp=indexedAdd[1].split("\\)");
 		indexedAdd[1]=temp[0];
 		return indexedAdd[1];
 	}

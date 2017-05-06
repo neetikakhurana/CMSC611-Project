@@ -7,6 +7,7 @@ import java.util.Scanner;
 import com.nitika.main.Simulator;
 
 public class DataParser {
+	public static int startLoc=256;
 
 	public static void parseData(String dataFile) throws FileNotFoundException{
 		
@@ -17,8 +18,10 @@ public class DataParser {
 			line=scanner.nextLine();
 			if(line.isEmpty()==false){
 				//for(int i=0;i<32;i++){
-					System.out.println(Integer.parseInt(line,2));
+					//System.out.println(Integer.parseInt(line,2));
 					Simulator.data[i]=Integer.parseInt(line,2);
+					Simulator.memoryData.put(startLoc, Simulator.data[i]);
+					startLoc++;
 					i++;
 				//}
 			}

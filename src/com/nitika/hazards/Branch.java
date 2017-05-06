@@ -1,7 +1,5 @@
 package com.nitika.hazards;
 
-import java.security.AllPermission;
-
 import com.nitika.constants.ApplicationConstants;
 import com.nitika.data.Registers;
 import com.nitika.main.Simulator;
@@ -25,17 +23,35 @@ public class Branch {
 	//what to do if its a branching instruction
 	public static int onBranch(int instNo){
 		if(Simulator.memory[instNo][1].equals(ApplicationConstants.J)){
-			//next instruction has already been fetched
+			//write to file till this point
+			CalcScoreboard.writeResultToFile(found,instNo+1);
+			
+			//search for the label
+			for(int i=0;i<CalcScoreboard.Allfetch.size();i++){
+				if(Simulator.memory[i][0].matches(Simulator.memory[instNo][2])){
+					//find the instruction associated with the label
+					found=i;
+					break;
+				}
+			}
+			
 			if(Simulator.fetch[instNo+1]!=0){
-				//flush the fetched instruction
-				//Simulator.fetch[instNo+1]=0;
-				//go to the label specified
+				//next instruction has already been fetched
+				System.out.println("next instruction has already been fetched");
+				
+				int k=instNo+2;
+				for(int j=found;j<Simulator.totalInst;j++){
+					//load all instructions into the memory array
+					Simulator.memory[k]=Simulator.memory[j];
+					k++;
+				}
 				return 0;
 			}
+			//**************************correct till here**********************************************
 			else{
-				//simply go to the label instruction
 				return 1;
 			}
+			
 		}
 		else{
 			//branch instructions such as BNE, BEQ

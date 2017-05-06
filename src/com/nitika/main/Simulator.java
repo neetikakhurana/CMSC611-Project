@@ -12,6 +12,7 @@ import java.util.Scanner;
 import com.nitika.functionalUnit.Status;
 import com.nitika.hazards.Branch;
 import com.nitika.parsers.ConfigParser;
+import com.nitika.parsers.DataParser;
 import com.nitika.parsers.InstParser;
 import com.nitika.scoreboard.CalcScoreboard;
 
@@ -33,17 +34,18 @@ public class Simulator {
 	public static String memory[][], RAW[], WAW[], STRUCT[], WAR[];
 	public static int nfpAdder=0, nfpMult=0, nfpDiv=0, fpAddEx=0, fpMulEx=0, fpDivEx=0, nbIcache=0, bsizeIcache=0, nIntU=1;
 	public static Map<String, Integer> registers=new HashMap<String, Integer>();
+	public static Map<Integer,Integer> memoryData=new HashMap<Integer,Integer>();
 	
 	public static void main(String[] args) throws IOException,FileNotFoundException {
 		
 		getInput();
 		intializeResultTxt();
 		initiateDefaultValues();
-		Status.initializeFUStatusPara();
 		InstParser.parseInstructions(instTxt);
 		ConfigParser.parseConfigurations(configTxt);
-//		DataParser.parseData(dataTxt);
-		
+		DataParser.parseData(dataTxt);
+		Status.functional();
+
 		CalcScoreboard.calculate();
 		CalcScoreboard.writeResultToFile(Branch.found,totalInst-1);
 		scoreBoard.format("%n%nTotal number of access requests for instruction cache: %n");
@@ -104,7 +106,7 @@ public class Simulator {
 		//define the header for result.txt
 		scoreBoard=new Formatter(resultTxt);
 		System.out.println("\t\tInstruction\t\t\t\tFetch    Issue\t   Read    Exec     Write     RAW     WAW   Struct\n");
-		scoreBoard.format("\t\t%s\t\t\t\t%s    %s\t   %s    %s     %s     %s     %s   %s%n",
+		scoreBoard.format("\t\t%s\t\t\t\t%s    %s\t   %s    %s\t     %s     %s\t     %s   %s%n",
    			 "Instruction","Fetch","Issue","Read","Exec","Write","RAW","WAW","Struct");
 	}
 	
@@ -130,7 +132,7 @@ public class Simulator {
 		write=new int[noInst];
 		totalInst=noInst;
 		memory=new String[noInst][5];
-		data=new int[noInst];
+		data=new int[50];
 		RAW=new String[noInst];
 		WAW=new String[noInst];
 		WAR=new String[noInst];

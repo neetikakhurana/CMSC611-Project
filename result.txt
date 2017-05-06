@@ -1,4 +1,4 @@
-		Instruction				Fetch    Issue	   Read    Exec     Write     RAW     WAW   Struct
+		Instruction				Fetch    Issue	   Read    Exec	     Write     RAW	     WAW   Struct
         Ï»¿LI  R4   ,266        1         2         3         4         5    		N		N		N 
         LI     R5   ,274        2         6         7         8         9    		N		N		Y 
         LI     R1   ,8          6         10        11        12        13   		N		N		Y 

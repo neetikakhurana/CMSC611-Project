@@ -39,11 +39,11 @@ public class Stages {
 	//operations in fetch stage
 	public static void fetchStage(int instNo){
 		
-	//	int cycleNo = Icache.instInIcache(instNo);
+//		int cycleNo = Icache.instInIcache(instNo);
 		//if(cycleNo==0){
-			//Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
+		//	Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
 		//}
-		//else if(cycleNo==1){
+	//	else if(cycleNo==1){
 		//if it was available in the cache, then use the previous stage's 
 			//Simulator.cycle++;
 			//CalcScoreboard.fetchControl=CalcScoreboard.fetchControl+cycleNo;
@@ -51,7 +51,7 @@ public class Stages {
 		//}
 		//else{
 			//do nothing coz we need to wait it out
-		//}
+	//	}
 		//CalcScoreboard.fetchControl=Simulator.fetch[instNo];
 	}
 	
@@ -68,12 +68,13 @@ public class Stages {
 		else if (Branch.branch(instNo)){
 			int result=Branch.onBranch(instNo);
 			if(result==0){
-				//J instruction	
+				//J instruction, next instruction has been fetched so now update it since we have flushed the instruction
+				Simulator.issue[instNo]=CalcScoreboard.fetchControl;
 			}
 			else if(result==1)
 			{
-				//J with next instruction not fetched
-				Simulator.issue[instNo]=CalcScoreboard.fetchControl;
+				//J with next instruction not fetched; wait for it to be fetched
+				//Simulator.issue[instNo]=CalcScoreboard.fetchControl;
 			}
 			else if(result==2 || result==3)
 			{
@@ -274,8 +275,8 @@ public class Stages {
 			if(storeDelay!=0){
 				storeDelay--;
 				if(storeDelay==0){
-					LD.result(instNo);
-					loadDelay=2;
+					SD.result(instNo);
+					storeDelay=2;
 					return 1;
 				}
 				return 0;
@@ -349,5 +350,18 @@ public class Stages {
 			LUI.result(instNo);
 			return 1;
 		}
+	}
+	
+	//check if all instructions have completed the write stage
+	public static boolean allCompletedWrite(){
+		for(int i=writeIncomplete;i<Simulator.totalInst;i++){
+			if(Simulator.write[i]==0){
+				return false;
+			}
+			else{
+				continue;
+			}
+		}
+		return true;
 	}
 }
