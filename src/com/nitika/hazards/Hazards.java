@@ -10,6 +10,8 @@ public class Hazards {
 	public static int[] rawSource=new int[Simulator.totalInst];
 	public static int[] wawSource=new int[Simulator.totalInst];
 	public static int[] structSource=new int[Simulator.totalInst];
+	public static boolean both=false;
+	public static int second=0;
 	//check for structural hazards
 	public static boolean structural(int inst){
 		String instType=Simulator.memory[inst][1];
@@ -95,14 +97,26 @@ public class Hazards {
 				if(Simulator.write[i]==0){
 					//branch instruction
 					if((!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BEQ)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BNE)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.LW)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.LD)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.SW)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.SD))){ 
-						if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][4]))){
-							rawSource[instruction]=i;
-							Simulator.RAW[instruction]="Y";
-							return true;
-						}else{
-							//no previous instruction uses the same destination
+						
+						if(Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SW) || Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SD))
+						{
+							//no RAW in case first instruction is a store
 							continue;
+							
 						}
+						else
+						{
+							if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][4]))){
+								rawSource[instruction]=i;
+								Simulator.RAW[instruction]="Y";
+								return true;
+							}else{
+								//no previous instruction uses the same destination
+								continue;
+							}
+						}
+						
+						
 					}
 					//current instruction is a load one
 					else if((Simulator.memory[instruction][1].matches(ApplicationConstants.LD)) || (Simulator.memory[instruction][1].matches(ApplicationConstants.LW)) ){
@@ -123,7 +137,7 @@ public class Hazards {
 							continue;
 						}
 						//if store instruction's source doesn't match with any of the previous instruction's dest and the previous instruction was another store instruction
-						else if(!Simulator.memory[instruction][2].equals(Simulator.memory[i][2]) && (Simulator.memory[i][1].matches(ApplicationConstants.SW) || !Simulator.memory[i][1].matches(ApplicationConstants.SD))){
+						else if(!Simulator.memory[instruction][2].equals(Simulator.memory[i][2]) && (Simulator.memory[i][1].matches(ApplicationConstants.SW) || Simulator.memory[i][1].matches(ApplicationConstants.SD))){
 							//check if current instruction's source matched the prev store's destination
 							if(!InstParser.getStoreDest(i).equals(Simulator.memory[instruction][2])){
 								continue;
@@ -181,27 +195,46 @@ public class Hazards {
 				//if both blank, then skip(so check it)
 				if(Simulator.write[i]==0){
 						//this should be the case for all instructions except branching ones
-					if((!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BEQ)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BNE)) )
+					if((!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BEQ)) && (!Simulator.memory[instruction][1].equalsIgnoreCase(ApplicationConstants.BNE)) && (!Simulator.memory[instruction][1].contains(ApplicationConstants.LD)) && (!Simulator.memory[instruction][1].contains(ApplicationConstants.SD)) && (!Simulator.memory[instruction][1].contains(ApplicationConstants.SW)) && (!Simulator.memory[instruction][1].contains(ApplicationConstants.LW)))
 					{ 
-						if(Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][2])){
-							wawSource[instruction]=i;
-							Simulator.WAW[instruction]="Y";
-							return true;
+						if(Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SW) || Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SD))
+						{
+							if(InstParser.getStoreDest(i).equals(Simulator.memory[instruction][2]))
+							{
+								wawSource[instruction]=i;
+								Simulator.WAW[instruction]="Y";
+								return true;
+							}
+							else{
+								continue;
+							}
+							
 						}
 						else
 						{
-							//no previous instruction uses the same destination
-							continue;
+							if(Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][2]))
+							{
+								wawSource[instruction]=i;
+								Simulator.WAW[instruction]="Y";
+								return true;
+							}
+							else
+							{
+								continue;	
+							}
 						}
+						
 					}
 					//if current instruction is a store one
 					else if(Simulator.memory[instruction][1].matches(ApplicationConstants.SW) || Simulator.memory[instruction][1].matches(ApplicationConstants.SD)){
 						//if prev isntruction is also a store one and their destinations do not match
-						if(!InstParser.getStoreDest(instruction).equals(InstParser.getStoreDest(i)) && (Simulator.memory[i][1].equals(ApplicationConstants.SW) || Simulator.memory[i][1].equals(ApplicationConstants.SD))){
+						if((Simulator.memory[i][1].equals(ApplicationConstants.SW) || Simulator.memory[i][1].equals(ApplicationConstants.SD))){
+						if(!InstParser.getStoreDest(instruction).equals(InstParser.getStoreDest(i))){
 							continue;
 						}
+						}
 						//if prev instr is not store and still their destinations do not clash
-						else if(!InstParser.getStoreDest(instruction).equals(Simulator.memory[i][2]) && (Simulator.memory[i][1].equals(ApplicationConstants.SW) || Simulator.memory[i][1].equals(ApplicationConstants.SD))){
+						else if(!InstParser.getStoreDest(instruction).equals(Simulator.memory[i][2]) && (!Simulator.memory[i][1].equals(ApplicationConstants.SW) || !Simulator.memory[i][1].equals(ApplicationConstants.SD))){
 							continue;
 						}
 						else{

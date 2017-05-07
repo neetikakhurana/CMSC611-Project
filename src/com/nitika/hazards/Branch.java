@@ -94,7 +94,18 @@ public class Branch {
 					k++;
 				}
 				
+				for(int j=found;j<Simulator.totalInst;j++){
+					//load all instructions into the memory array
+//					Simulator.memory[k]=Simulator.memory[j];
+//					k++;
+					Simulator.fetch[j]=0;
+					Simulator.issue[j]=0;
+					Simulator.read[j]=0;
+					Simulator.execute[j]=0;
+					Simulator.write[j]=0;
+				}
 				
+				Stages.writeIncomplete=found;
 				//new instr added to memory********************
 				
 			

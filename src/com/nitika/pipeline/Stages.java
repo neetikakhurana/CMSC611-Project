@@ -1,8 +1,10 @@
 package com.nitika.pipeline;
 
-import com.nitika.cache.Icache;
 import com.nitika.constants.ApplicationConstants;
+import com.nitika.enums.FunctionalUnit;
 import com.nitika.functionalUnit.Available;
+import com.nitika.functionalUnit.NewUnit;
+import com.nitika.functionalUnit.Status;
 import com.nitika.hazards.Branch;
 import com.nitika.hazards.Hazards;
 import com.nitika.instruction.ADDD;
@@ -34,6 +36,7 @@ public class Stages {
 	public static int divDelay=Simulator.fpDivEx;
 	public static int loadDelay=2;
 	public static int storeDelay=2;
+	public static boolean goingToBranch=false;
 	public static int writeIncomplete=0;
 	public static int writeComplete=0;
 	//operations in fetch stage
@@ -47,7 +50,7 @@ public class Stages {
 		//if it was available in the cache, then use the previous stage's 
 			//Simulator.cycle++;
 			//CalcScoreboard.fetchControl=CalcScoreboard.fetchControl+cycleNo;
-			Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
+		Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
 		//}
 		//else{
 			//do nothing coz we need to wait it out
@@ -78,8 +81,9 @@ public class Stages {
 			}
 			else if(result==2 || result==3)
 			{
-				//BEQ or BNE or normal isntruction
+				//BEQ or BNE or normal instruction
 				Simulator.issue[instNo]=CalcScoreboard.fetchControl;
+				goingToBranch=true;
 			}
 			
 		}
@@ -108,6 +112,7 @@ public class Stages {
 					
 					//if it return true, then that means let the next instruction continue
 					//we need not to do flushing (or rather anything at all)
+					goingToBranch=false;
 				}
 				else{
 					System.out.println("The condition turned out to be true..Going to new label");
@@ -130,7 +135,7 @@ public class Stages {
 		else{
 			Simulator.execute[instNo]=CalcScoreboard.fetchControl;
 		}
-	}
+ 	}
 	
 	//operations in write stage
 	public static void writeStage(int instNo){
@@ -165,20 +170,20 @@ public class Stages {
 	
 	public static int performExecution(int instNo){
 		//perform the task
-		//take into account the delay of fucntional unit
+		//take into account the delay of functional unit
 		if((Simulator.memory[instNo][1].matches(ApplicationConstants.ADDD))){
-			if(addDelay!=0){
-				addDelay--;
-				if(addDelay==0){
+			if(Available.ArrayUnits[instNo].getLatency()!=0){
+				Available.ArrayUnits[instNo].setLatency(Available.ArrayUnits[instNo].getLatency()-1);
+				if(Available.ArrayUnits[instNo].getLatency()==0){
 					ADDD.result(instNo);
-					addDelay=Simulator.fpAddEx;
+					//add=Simulator.fpAddEx;
 					return 1;
 				}
 				return 0;
 			}
 			else{
 				ADDD.result(instNo);
-				addDelay=Simulator.fpAddEx;
+				//Available.newUnit.setLatency(Simulator.fpAddEx);
 				return 1;
 			}
 			/*ADDD.result(instNo);
@@ -203,43 +208,43 @@ public class Stages {
 			}
 			else{
 				SUBD.result(instNo);
-				subDelay=Simulator.fpAddEx;
+				//subDelay=Simulator.fpAddEx;
 				return 1;
 			}
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.MULTD))){
 			//ADDD.result(instNo);
 			//move this result into destination register
-			if(mulDelay!=0){
-				mulDelay--;
-				if(mulDelay==0){
+			if(Available.ArrayUnits[instNo].getLatency()!=0){
+				Available.ArrayUnits[instNo].setLatency(Available.ArrayUnits[instNo].getLatency()-1);
+				if(Available.ArrayUnits[instNo].getLatency()==0){
 					MULD.result(instNo);
-					mulDelay=Simulator.fpMulEx;
+					//add=Simulator.fpAddEx;
 					return 1;
 				}
 				return 0;
 			}
 			else{
 				MULD.result(instNo);
-				mulDelay=Simulator.fpMulEx;
+				//Available.newUnit.setLatency(Simulator.fpAddEx);
 				return 1;
 			}
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.DIVD))){
 			//ADDD.result(instNo);
 			//move this result into destination register
-			if(divDelay!=0){
-				divDelay--;
-				if(divDelay==0){
+			if(Available.ArrayUnits[instNo].getLatency()!=0){
+				Available.ArrayUnits[instNo].setLatency(Available.ArrayUnits[instNo].getLatency()-1);
+				if(Available.ArrayUnits[instNo].getLatency()==0){
 					DIVD.result(instNo);
-					divDelay=Simulator.fpDivEx;
+					//add=Simulator.fpAddEx;
 					return 1;
 				}
 				return 0;
 			}
 			else{
 				DIVD.result(instNo);
-				divDelay=Simulator.fpDivEx;
+				//Available.newUnit.setLatency(Simulator.fpAddEx);
 				return 1;
 			}
 		}

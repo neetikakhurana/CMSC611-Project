@@ -1,7 +1,5 @@
 package com.nitika.instruction;
 
-import com.nitika.main.Simulator;
-
 public class MULD {
 
 	public static void result(int instNo){

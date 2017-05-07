@@ -1,5 +1,8 @@
 package com.nitika.functionalUnit;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.nitika.constants.ApplicationConstants;
 import com.nitika.enums.FunctionalUnit;
 import com.nitika.main.Simulator;
@@ -7,6 +10,7 @@ import com.nitika.main.Simulator;
 public class Status {
 
 	public static int fUnit[]=new int[Simulator.totalInst];
+	public static Map<Integer,Integer> unitsAvailable=new HashMap<Integer,Integer>();
 	
 	//call it only after total instructions have been determined i.e. inst.txt has been parsed
 	public static void functional(){

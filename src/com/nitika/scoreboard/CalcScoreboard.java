@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.nitika.constants.ApplicationConstants;
+import com.nitika.enums.FunctionalUnit;
+import com.nitika.functionalUnit.Available;
+import com.nitika.functionalUnit.Status;
 import com.nitika.hazards.Hazards;
 import com.nitika.main.Simulator;
 import com.nitika.pipeline.Stages;
@@ -14,16 +17,21 @@ public class CalcScoreboard {
 	public static boolean branchInProgress=false;
 	public static int lastEnd=0;
 	
-	public static void calculate(){
+	public static void calculate()
+	{
 		boolean HLTfreeze=false;
 		boolean iterate=true;
 		//move instruction to fetch stage
-		while(iterate){
+		while(iterate)
+		{
 			
 			//move instruction to issue stage
-			for(int i=Stages.writeIncomplete;i<=Allfetch.size();i++){
-				if(i==Simulator.totalInst){
-					if(Stages.allCompletedWrite()){
+			for(int i=Stages.writeIncomplete;i<=Allfetch.size();i++)
+			{
+				if(i==Simulator.totalInst)
+				{
+					if(Stages.allCompletedWrite())
+					{
 						iterate=false;
 						break;
 					}
@@ -32,9 +40,12 @@ public class CalcScoreboard {
 					}
 				}
 				//check if its not a HALT instruction
-				if(!Simulator.memory[i][1].equals(ApplicationConstants.HLT)){
-					if(Simulator.fetch[i]==0 && !branchInProgress){
-						if(i==0){
+				if(!Simulator.memory[i][1].equals(ApplicationConstants.HLT))
+				{
+					if(Simulator.fetch[i]==0 && !branchInProgress)
+					{
+						if(i==0)
+						{
 							Stages.fetchStage(i);
 							if(!Allfetch.contains(i))
 								Allfetch.add(i);
@@ -42,7 +53,8 @@ public class CalcScoreboard {
 						}
 						else{
 							//check if prev one has been issued
-							if(Simulator.issue[i-1]!=0){
+							if(Simulator.issue[i-1]!=0)
+							{
 								Stages.fetchStage(i);
 								if(!Allfetch.contains(i))
 									Allfetch.add(i);
@@ -51,15 +63,20 @@ public class CalcScoreboard {
 						}
 					}
 			
-						if(Simulator.issue[i]==0 && Simulator.fetch[i]<fetchControl && Simulator.fetch[i]!=0){
-							if(i==0){
+						if(Simulator.issue[i]==0 && Simulator.fetch[i]<fetchControl && Simulator.fetch[i]!=0)
+						{
+							if(i==0)
+							{
 								Stages.issueStage(i);
 								continue;
 								
 							}
-							else if(Simulator.fetch[i-1]!=0){
-								if(Stages.writeIncomplete==0){
-									if(Simulator.write[i-1]!=0){
+							else if(Simulator.fetch[i-1]!=0)
+							{
+								if(Stages.writeIncomplete==0)
+								{
+									if(Simulator.write[i-1]!=0)
+									{
 										if(Simulator.write[i-1]!=fetchControl)
 											Stages.issueStage(i);
 											continue;
@@ -70,12 +87,23 @@ public class CalcScoreboard {
 									}
 								}
 								else{
-									//check if the previously written instruction that was causing a hazard was in the same cycle
-									if(Simulator.write[Stages.writeComplete]!=0){
+									//check if the previously written instruction that was causing a structural hazard was in the same cycle
+									if(Simulator.write[Stages.writeComplete]!=0 && Status.fUnit[i]==Status.fUnit[Stages.writeComplete])
+									{
 										if(Simulator.write[Stages.writeComplete]!=fetchControl)
 											Stages.issueStage(i);
 											continue;
 									}
+									//if the current one had a raw dependency over the last completed instruction
+									else if(Simulator.write[Stages.writeComplete]!=0 && Hazards.wawSource[i]==Stages.writeComplete)
+									{
+										if(Simulator.write[Stages.writeComplete]!=fetchControl)
+										{
+											Stages.issueStage(i);
+											continue;
+										}
+									}
+									
 									else{
 										Stages.issueStage(i);
 										continue;
@@ -84,14 +112,19 @@ public class CalcScoreboard {
 							}
 						}
 						
-						if(Simulator.read[i]==0 && Simulator.issue[i]<fetchControl && Simulator.issue[i]!=0){
-							if(i==0){
+						if(Simulator.read[i]==0 && Simulator.issue[i]<fetchControl && Simulator.issue[i]!=0)
+						{
+							if(i==0)
+							{
 								Stages.readStage(i);
 								continue;
 							}
-							else if(Simulator.issue[i-1]!=0){
-								if(Stages.writeIncomplete==0){
-									if(Simulator.write[i-1]!=0){
+							else if(Simulator.issue[i-1]!=0)
+							{
+								if(Stages.writeIncomplete==0)
+								{
+									if(Simulator.write[i-1]!=0)
+									{
 										if(Simulator.write[i-1]!=fetchControl)
 											Stages.readStage(i);
 											continue;
@@ -103,11 +136,19 @@ public class CalcScoreboard {
 								}
 								else{
 									//check if the previously written instruction that was causing a hazard was in the same cycle
-									if(Simulator.write[Stages.writeComplete]!=0){
+									if(Simulator.write[Stages.writeComplete]!=0)
+									{
 										if(Simulator.write[Stages.writeComplete]!=fetchControl)
+										{
 											Stages.readStage(i);
 											continue;
+										}
+										/*else if(Simulator.write[Stages.writeComplete]!=Hazards.rawSource[i]){
+											Stages.readStage(i);
+											continue;
+										}*/
 									}
+									
 									else{
 										Stages.readStage(i);
 										continue;
@@ -116,8 +157,10 @@ public class CalcScoreboard {
 							}
 						}
 						
-						if(Simulator.execute[i]==0 && Simulator.read[i]<fetchControl && Simulator.read[i]!=0){
-							if(i==0){
+						if(Simulator.execute[i]==0 && Simulator.read[i]<fetchControl && Simulator.read[i]!=0)
+						{
+							if(i==0)
+							{
 								Stages.executeStage(i);
 								continue;
 							}
@@ -127,15 +170,18 @@ public class CalcScoreboard {
 							}
 						}
 						
-						if(Simulator.write[i]==0 && Simulator.execute[i]<fetchControl && Simulator.execute[i]!=0){
-							if(i==0){
+						if(Simulator.write[i]==0 && Simulator.execute[i]<fetchControl && Simulator.execute[i]!=0)
+						{
+							if(i==0)
+							{
 								Stages.writeStage(i);
 								continue;
 							}
 							else{
 								Stages.writeStage(i);
 								//after the branching, new instructions have been inserted so this value would change
-								if(i==(Simulator.totalInst-1)){
+								if(i==(Simulator.totalInst-1))
+								{
 									iterate=false;
 								}
 								continue;
@@ -148,14 +194,15 @@ public class CalcScoreboard {
 					//just fetch the HLT instruction
 					//we again to implement the check that the previous instruction has been issued
 					// and on every clock cycle, it is fetching the hlt again and again (since no other stage has been defined for it)
-					if(Simulator.issue[i-1]!=0 && Simulator.fetch[i]==0 && !branchInProgress){
+					if(Simulator.issue[i-1]!=0 && Simulator.fetch[i]==0 && !branchInProgress)
+					{
 						Stages.fetchStage(i);
 						System.out.println("Fetched HLT instruction");
 						if(!Allfetch.contains(i))
 							Allfetch.add(i);
 						continue;
 					}
-					else if(Simulator.issue[i-1]!=0 && Simulator.fetch[i]!=0 && !branchInProgress && Simulator.read[i-1]!=fetchControl && Simulator.issue[i]==0){
+					else if(Simulator.issue[i-1]!=0 && Simulator.fetch[i]!=0 && !branchInProgress && Simulator.read[i-1]!=fetchControl && Simulator.issue[i]==0 && !Stages.goingToBranch){
 						if(HLTfreeze){
 							Simulator.issue[i]=-1;
 							Simulator.read[i]=-1;
