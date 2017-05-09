@@ -1,10 +1,8 @@
 package com.nitika.pipeline;
 
+import com.nitika.cache.Icache;
 import com.nitika.constants.ApplicationConstants;
-import com.nitika.enums.FunctionalUnit;
 import com.nitika.functionalUnit.Available;
-import com.nitika.functionalUnit.NewUnit;
-import com.nitika.functionalUnit.Status;
 import com.nitika.hazards.Branch;
 import com.nitika.hazards.Hazards;
 import com.nitika.instruction.ADDD;
@@ -36,26 +34,63 @@ public class Stages {
 	public static int divDelay=Simulator.fpDivEx;
 	public static int loadDelay=2;
 	public static int storeDelay=2;
+	/**
+	 * Branching is going to happen, then goingToBranch will be set
+	 */
 	public static boolean goingToBranch=false;
-	public static int writeIncomplete=0;
-	public static int writeComplete=0;
+	public static int writeIncomplete=0;	//last incomplete instruction
+	public static int writeComplete=0;		//last complete instruction
+	
+	public static int branchRead=0;			//set when branch read is done but it has to wait since icache fetch is in progress for the next one
 	//operations in fetch stage
 	public static void fetchStage(int instNo){
 		
-//		int cycleNo = Icache.instInIcache(instNo);
-		//if(cycleNo==0){
-		//	Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
-		//}
-	//	else if(cycleNo==1){
+		int cycleNo = Icache.instInIcache(instNo);
+		if(cycleNo==0)
+		{
+			/**
+			 * cache hit
+			 */
+			if(instNo==0){
+				Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
+				if(!CalcScoreboard.Allfetch.contains(instNo))
+					CalcScoreboard.Allfetch.add(instNo);
+			}
+			else{
+				if(Simulator.issue[instNo-1]!=0){
+					Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
+					if(!CalcScoreboard.Allfetch.contains(instNo))
+						CalcScoreboard.Allfetch.add(instNo);
+
+				}
+			}
+		}
+		else if(cycleNo==1){
 		//if it was available in the cache, then use the previous stage's 
-			//Simulator.cycle++;
-			//CalcScoreboard.fetchControl=CalcScoreboard.fetchControl+cycleNo;
-		Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
-		//}
-		//else{
+			/**
+			 * if it is a cache hit, then only the fetch will be dependent upon the previous instr's issue stage
+			 * else it will keep on executing independently
+			 * 
+			 * Cache miss solved
+			**/
+			if(instNo!=0 && Simulator.issue[instNo-1]!=0 && Simulator.issue[instNo-1]<CalcScoreboard.fetchControl){
+				Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
+				if(!CalcScoreboard.Allfetch.contains(instNo))
+					CalcScoreboard.Allfetch.add(instNo);
+			}
+			else if(instNo==0){
+				Simulator.fetch[instNo]=CalcScoreboard.fetchControl;
+				if(!CalcScoreboard.Allfetch.contains(instNo))
+					CalcScoreboard.Allfetch.add(instNo);
+			}
+		}
+		else{
 			//do nothing coz we need to wait it out
-	//	}
-		//CalcScoreboard.fetchControl=Simulator.fetch[instNo];
+			/**
+			 * Cache miss
+			 * fetching from MM in progress
+			 */
+		}
 	}
 	
 	//operations in issue stage
@@ -64,7 +99,6 @@ public class Stages {
 		//Allocate functional unit based on instrType
 		//increment the cycle number if there are no hazards
 		if(!Hazards.structural(instNo) && !Hazards.WAW(instNo) && !Branch.branch(instNo)){
-			//Simulator.cycle++;
 			Simulator.issue[instNo]=CalcScoreboard.fetchControl;
 			Available.resourceAllocate(instNo);
 		}
@@ -102,22 +136,41 @@ public class Stages {
 		
 		if(!Hazards.RAW(instNo)){
 		//increment the cycle number if there are no hazards
-			Simulator.read[instNo]=CalcScoreboard.fetchControl;
-			if(Branch.onBranch(instNo)==2){
+			if(Branch.onBranch(instNo)==3){
+				//no branching
+				Simulator.read[instNo]=CalcScoreboard.fetchControl;
+			}
+			else if(Branch.onBranch(instNo)==2){
 				//BEQ or BNE (and they should not go beyond this point)
+				if(branchRead==0){
+					/**
+					 * coz of the previous instruction if not fetched coz of the delay, it will come to this stage again and again for branch instr and hence we need to control the read counter for it
+					 */
+					branchRead=CalcScoreboard.fetchControl;
+				}
 				Simulator.execute[instNo]=-1;
 				Simulator.write[instNo]=-1;
 				CalcScoreboard.branchInProgress=false;
-				if(Branch.onBEQBNE(instNo)){
+				int result=Branch.onBEQBNE(instNo);
+				if(result==2){
 					
 					//if it return true, then that means let the next instruction continue
 					//we need not to do flushing (or rather anything at all)
 					goingToBranch=false;
+					Simulator.read[instNo]=branchRead;
+					branchRead=0;
+				}
+				else if(result==3)
+				{
+					//branch turned out to be true. Going to label
+					System.out.println("The condition turned out to be true..Going to new label");
+					branchRead=0;
+					goingToBranch=false;
 				}
 				else{
-					System.out.println("The condition turned out to be true..Going to new label");
-					//CalcScoreboard.fetchControl++;
-					//continue with the newly fetched labelled instruction
+					/**
+					 * next instruction has not been fetched and wait for it to be fetched
+					 */
 				}
 			}
 		}
@@ -134,6 +187,7 @@ public class Stages {
 		}
 		else{
 			Simulator.execute[instNo]=CalcScoreboard.fetchControl;
+			CalcScoreboard.writeResultToFile(instNo, instNo);
 		}
  	}
 	
@@ -176,26 +230,16 @@ public class Stages {
 				Available.ArrayUnits[instNo].setLatency(Available.ArrayUnits[instNo].getLatency()-1);
 				if(Available.ArrayUnits[instNo].getLatency()==0){
 					ADDD.result(instNo);
-					//add=Simulator.fpAddEx;
 					return 1;
 				}
 				return 0;
 			}
 			else{
 				ADDD.result(instNo);
-				//Available.newUnit.setLatency(Simulator.fpAddEx);
 				return 1;
 			}
-			/*ADDD.result(instNo);
-			//move this result into destination register
-			int i=Simulator.fpAddEx;
-			while(i==0){
-				Simulator.cycle++;
-				i--;
-			}*/
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.SUBD))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			if(subDelay!=0){
 				subDelay--;
@@ -208,55 +252,46 @@ public class Stages {
 			}
 			else{
 				SUBD.result(instNo);
-				//subDelay=Simulator.fpAddEx;
 				return 1;
 			}
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.MULTD))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			if(Available.ArrayUnits[instNo].getLatency()!=0){
 				Available.ArrayUnits[instNo].setLatency(Available.ArrayUnits[instNo].getLatency()-1);
 				if(Available.ArrayUnits[instNo].getLatency()==0){
 					MULD.result(instNo);
-					//add=Simulator.fpAddEx;
 					return 1;
 				}
 				return 0;
 			}
 			else{
 				MULD.result(instNo);
-				//Available.newUnit.setLatency(Simulator.fpAddEx);
 				return 1;
 			}
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.DIVD))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			if(Available.ArrayUnits[instNo].getLatency()!=0){
 				Available.ArrayUnits[instNo].setLatency(Available.ArrayUnits[instNo].getLatency()-1);
 				if(Available.ArrayUnits[instNo].getLatency()==0){
 					DIVD.result(instNo);
-					//add=Simulator.fpAddEx;
 					return 1;
 				}
 				return 0;
 			}
 			else{
 				DIVD.result(instNo);
-				//Available.newUnit.setLatency(Simulator.fpAddEx);
 				return 1;
 			}
 		}
 		//1 delay for all instructions using integer unit
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.DADDI))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			DADDI.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.LD))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			if(loadDelay!=0){
 				loadDelay--;
@@ -275,7 +310,6 @@ public class Stages {
 				
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.SD))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			if(storeDelay!=0){
 				storeDelay--;
@@ -294,55 +328,46 @@ public class Stages {
 				
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.DADD))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			DADD.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.DSUBI))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			DSUBI.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.DSUB))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			DSUB.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.LW))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			LW.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.SW))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			SW.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.AND))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			AND.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.ANDI))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			ANDI.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.ORI))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			ORI.result(instNo);
 			return 1;
 		}
 		else if((Simulator.memory[instNo][1].matches(ApplicationConstants.OR))){
-			//ADDD.result(instNo);
 			//move this result into destination register
 			OR.result(instNo);
 			return 1;

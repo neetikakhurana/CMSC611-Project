@@ -9,8 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import com.nitika.cache.Dcache;
+import com.nitika.cache.Icache;
 import com.nitika.functionalUnit.Status;
-import com.nitika.hazards.Branch;
 import com.nitika.parsers.ConfigParser;
 import com.nitika.parsers.DataParser;
 import com.nitika.parsers.InstParser;
@@ -47,11 +48,12 @@ public class Simulator {
 		Status.functional();
 
 		CalcScoreboard.calculate();
-		CalcScoreboard.writeResultToFile(Branch.found,totalInst-1);
-		scoreBoard.format("%n%nTotal number of access requests for instruction cache: %n");
-	    scoreBoard.format("Number of instruction cache hits:  %d %n", 0);
-	    scoreBoard.format("Total number of access requests for data cache:  %d %n", 0);
-	    scoreBoard.format("Number of data cache hits:  %d %n", 0);
+		System.out.println("*************************************SCOREBOARD***********************************************");
+		CalcScoreboard.writeResultToFile(0,totalInst-1);
+		scoreBoard.format("%n%nTotal number of access requests for instruction cache: %d%n", Icache.accessRequests);
+	    scoreBoard.format("Number of instruction cache hits:  %d %n", Icache.iCacheHit);
+	    scoreBoard.format("Total number of access requests for data cache:  %d %n", Dcache.dataAccessRequests);
+	    scoreBoard.format("Number of data cache hits:  %d %n", Dcache.dataHits);
 	    scoreBoard.close();
 
 	}
@@ -125,20 +127,20 @@ public class Simulator {
 				break;
 			}
 		}
-		fetch=new int[noInst];
-		read=new int[noInst];
-		issue=new int[noInst];
-		execute=new int[noInst];
-		write=new int[noInst];
+		fetch=new int[50];
+		read=new int[50];
+		issue=new int[50];
+		execute=new int[50];
+		write=new int[50];
 		totalInst=noInst;
-		memory=new String[noInst][5];
+		memory=new String[50][5];
 		data=new int[50];
-		RAW=new String[noInst];
-		WAW=new String[noInst];
-		WAR=new String[noInst];
-		STRUCT=new String[noInst];
+		RAW=new String[50];
+		WAW=new String[50];
+		WAR=new String[50];
+		STRUCT=new String[50];
 		
-		for(int i=0;i<noInst;i++){
+		for(int i=0;i<50;i++){
 			fetch[i]=0;
 			read[i]=0;
 			issue[i]=0;

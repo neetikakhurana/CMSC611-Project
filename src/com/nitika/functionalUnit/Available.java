@@ -17,7 +17,7 @@ public class Available {
 	public static Map<Integer,Integer> allUnits=new HashMap<Integer,Integer>();
 	//public static int allUnits[]=new int[oFpAdd+oFpDiv+oFpMult+oIntU+1];
 	public static NewUnit newUnit;
-	public static NewUnit ArrayUnits[]=new NewUnit[Simulator.totalInst];
+	public static NewUnit ArrayUnits[]=new NewUnit[50];
 	public static int i=0;
 	//occupy the functional unit
 	public static void resourceAllocate(int instNo){

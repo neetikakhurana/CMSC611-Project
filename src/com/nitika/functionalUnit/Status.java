@@ -9,7 +9,7 @@ import com.nitika.main.Simulator;
 
 public class Status {
 
-	public static int fUnit[]=new int[Simulator.totalInst];
+	public static int fUnit[]=new int[50];
 	public static Map<Integer,Integer> unitsAvailable=new HashMap<Integer,Integer>();
 	
 	//call it only after total instructions have been determined i.e. inst.txt has been parsed
