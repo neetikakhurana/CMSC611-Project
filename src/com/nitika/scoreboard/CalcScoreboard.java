@@ -255,7 +255,6 @@ public class CalcScoreboard {
 							Simulator.read[i]=-1;
 							Simulator.execute[i]=-1;
 							Simulator.write[i]=-1;
-							writeResultToFile(i, i);
 							continue;
 						}
 						//if the previous instruction is also a HLT, then stop processing IF AND ONLY IF the branch is false
@@ -265,7 +264,6 @@ public class CalcScoreboard {
 							Simulator.read[i]=-1;
 							Simulator.execute[i]=-1;
 							Simulator.write[i]=-1;
-							writeResultToFile(i, i);
 							continue;
 						}
 						Stages.issueStage(i);
@@ -273,7 +271,6 @@ public class CalcScoreboard {
 						Simulator.read[i]=-1;
 						Simulator.execute[i]=-1;
 						Simulator.write[i]=-1;
-						writeResultToFile(i, i);
 						//freeze fetching of instructions any further
 						continue;
 					}

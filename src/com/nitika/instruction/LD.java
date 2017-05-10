@@ -1,13 +1,17 @@
 package com.nitika.instruction;
 
+import com.nitika.cache.Dcache;
+import com.nitika.cache.Icache;
 import com.nitika.main.Simulator;
 import com.nitika.parsers.InstParser;
 
 public class LD {
 
 	public static void result(int instNo){
-		//get data for source1 and source2 and add them
-		//Integer.parseInt(InstParser.getSource1(instNo)+InstParser.getSource2(instNo)
+		/**
+		 * first check if the data is available in the cache or not
+		 */
+		
 		String dest=Simulator.memory[instNo][2]; //dest register
 		//value to be stored 
 		String source=InstParser.getLDSource(instNo);

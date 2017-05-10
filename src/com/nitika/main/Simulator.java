@@ -15,6 +15,7 @@ import com.nitika.functionalUnit.Status;
 import com.nitika.parsers.ConfigParser;
 import com.nitika.parsers.DataParser;
 import com.nitika.parsers.InstParser;
+import com.nitika.pipeline.Stages;
 import com.nitika.scoreboard.CalcScoreboard;
 
 /**
@@ -50,9 +51,10 @@ public class Simulator {
 		CalcScoreboard.calculate();
 		System.out.println("*************************************SCOREBOARD***********************************************");
 		CalcScoreboard.writeResultToFile(0,totalInst-1);
-		scoreBoard.format("%n%nTotal number of access requests for instruction cache: %d%n", Icache.accessRequests);
+		System.out.println(Stages.daccess);
+		scoreBoard.format("%n%nTotal number of access requests for instruction cache: %d%n", Icache.accessRequests/5);
 	    scoreBoard.format("Number of instruction cache hits:  %d %n", Icache.iCacheHit);
-	    scoreBoard.format("Total number of access requests for data cache:  %d %n", Dcache.dataAccessRequests);
+	    scoreBoard.format("Total number of access requests for data cache:  %d %n", Stages.daccess*2);
 	    scoreBoard.format("Number of data cache hits:  %d %n", Dcache.dataHits);
 	    scoreBoard.close();
 

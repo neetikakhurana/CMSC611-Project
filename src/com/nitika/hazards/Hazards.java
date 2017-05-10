@@ -129,7 +129,7 @@ public class Hazards {
 							{
 								rawSource[instruction]=i;
 								for(int j=i+1;j<instruction;j++){
-									if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][4])))
+									if((Simulator.memory[j][2].equalsIgnoreCase(Simulator.memory[instruction][3])) || (Simulator.memory[j][2].equalsIgnoreCase(Simulator.memory[instruction][4])))
 									{
 										rawSource2[instruction]=j;
 									}
@@ -150,15 +150,29 @@ public class Hazards {
 					else if((Simulator.memory[instruction][1].matches(ApplicationConstants.LD)) || (Simulator.memory[instruction][1].matches(ApplicationConstants.LW)))
 					{
 						//if source reg in the source is a destination of previous instruction
-						if(!InstParser.getLDSource(instruction).equals(Simulator.memory[i][2]))
-						{
-							continue;
+						if(!Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SD) && !Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SW)){
+							if(!InstParser.getLDSource(instruction).equals(Simulator.memory[i][2]))
+							{
+								continue;
+							}
+							else
+							{
+								rawSource[instruction]=i;
+								Simulator.RAW[instruction]="Y";
+								return true;
+							}
 						}
-						else
-						{
-							rawSource[instruction]=i;
-							Simulator.RAW[instruction]="Y";
-							return true;
+						else{
+							if(!InstParser.getLDSource(instruction).equals(InstParser.getStoreDest(i)))
+							{
+								continue;
+							}
+							else
+							{
+								rawSource[instruction]=i;
+								Simulator.RAW[instruction]="Y";
+								return true;
+							}
 						}
 					}
 					//store instruction
@@ -193,16 +207,32 @@ public class Hazards {
 					}
 					else
 					{
-						if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][2])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])))
+						if(!Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SD) && !Simulator.memory[i][1].equalsIgnoreCase(ApplicationConstants.SW))
 						{
-							rawSource[instruction]=i;
-							Simulator.RAW[instruction]="Y";
-							return true;
+							if((Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][2])) || (Simulator.memory[i][2].equalsIgnoreCase(Simulator.memory[instruction][3])))
+							{
+								rawSource[instruction]=i;
+								Simulator.RAW[instruction]="Y";
+								return true;
+							}
+							else
+							{
+								//no previous instruction uses the same destination
+								continue;
+							}
 						}
-						else
-						{
-							//no previous instruction uses the same destination
-							continue;
+						else{
+							if(Simulator.memory[instruction][2].equalsIgnoreCase(InstParser.getStoreDest(i)) || Simulator.memory[instruction][3].equalsIgnoreCase(InstParser.getStoreDest(i)))
+							{
+								rawSource[instruction]=i;
+								Simulator.RAW[instruction]="Y";
+								return true;
+							}
+							else
+							{
+								//no previous instruction uses the same destination
+								continue;
+							}
 						}
 					}
 				}

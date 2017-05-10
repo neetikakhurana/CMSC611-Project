@@ -2,6 +2,7 @@ package com.nitika.cache;
 
 import com.nitika.hazards.Branch;
 import com.nitika.main.Simulator;
+import com.nitika.scoreboard.CalcScoreboard;
 
 public class Icache {
 
@@ -12,6 +13,12 @@ public class Icache {
 	public static int MMaccessTime=3;
 	public static boolean MMinUse=false;
 	public static int delay=-1;
+	public static int loop=0;
+	public static int[] checkLast=new int[50];
+	/*
+	 * within variable checks if the MMInUse is set by this cache itself
+	 */
+	public static boolean within=false;
 	
 	public static int iCache[][]=new int[Simulator.nbIcache][Simulator.bsizeIcache];
 	/**
@@ -21,7 +28,7 @@ public class Icache {
 	 */
 	public static int instInIcache(int instNo){
 	
-		accessRequests++;
+		//accessRequests++;
 		if(instNo==0){
 			for(int i=0;i<Simulator.nbIcache;i++)
 			{
@@ -54,7 +61,7 @@ public class Icache {
 		//if the instruction is available in cache and update cache hit counter iCacheHit++
 		if( instNo<(Simulator.bsizeIcache * Simulator.nbIcache) && iCache[blockNo][blockOffset]==instNo)
 		{
-			iCacheHit++;
+			//iCacheHit++;
 			return 0;
 		}
 		if(instNo>(Simulator.bsizeIcache * Simulator.nbIcache-1))
@@ -68,14 +75,14 @@ public class Icache {
 						blockOffset=(Branch.branchFetch.get(instNo)-(Simulator.bsizeIcache*Simulator.nbIcache))%Simulator.bsizeIcache;
 					}
 					if(iCache[blockNo][blockOffset]==Branch.branchFetch.get(instNo)){
-						iCacheHit++;
+						//iCacheHit++;
 						return 0;
 					}
 				}
 			}
 			else if(iCache[blockNo][blockOffset]==instNo)
 			{
-				iCacheHit++;
+				//iCacheHit++;
 				return 0;
 			}
 			else
@@ -83,8 +90,11 @@ public class Icache {
 				//else, wait till it is brought from the main memory and keep updating clock cycles Simulator.cycle++ in loop till then
 				//calculate cache miss penalty iCacheMiss++ (only once)
 				//and return the cycle number
-				
-				delay--;
+				if(MMinUse==false || within)
+				{
+					//check if main memory is free
+					delay--;
+					within=true;
 				if(delay==-1)
 				{
 					int i=0;
@@ -111,13 +121,21 @@ public class Icache {
 						}
 						
 					}
+					checkLast[loop]=CalcScoreboard.fetchControl;
+					loop++;
 					MMinUse=false;
+					within=false;
 					return 1;
 				}
 				else
 				{
 					iCacheMiss++;
 					MMinUse=true;
+					return 2;
+				}
+			}
+				else{
+					//if main memory is being used by data cache
 					return 2;
 				}
 			}
@@ -128,44 +146,55 @@ public class Icache {
 			//else, wait till it is brought from the main memory and keep updating clock cycles Simulator.cycle++ in loop till then
 			//calculate cache miss penalty iCacheMiss++ (only once)
 			//and return the cycle number
-			
-			delay--;
-			if(delay==-1)
-			{
-				int i=0;
-				//instructions after the current one
-				for(i=blockOffset;i<Simulator.bsizeIcache;i++){
-					if(instNo+i<Simulator.totalInst)
-					{
-						iCache[blockNo][blockOffset+i]=instNo+i;
+			if(MMinUse==false || within){
+				delay--;
+				within=true;
+				if(delay==-1)
+				{
+					int i=0;
+					//instructions after the current one
+					for(i=blockOffset;i<Simulator.bsizeIcache;i++){
+						if(instNo+i<Simulator.totalInst)
+						{
+							iCache[blockNo][blockOffset+i]=instNo+i;
+						}
+						else
+						{
+							iCache[blockNo][blockOffset+i]=-1;
+						}
 					}
-					else
-					{
-						iCache[blockNo][blockOffset+i]=-1;
+					//instructions before the current one
+					for(int j=1;j<=blockOffset;j++){
+						if(instNo-j<Simulator.totalInst)
+						{
+							iCache[blockNo][blockOffset-j]=instNo-j;
+						}
+						else
+						{
+							iCache[blockNo][blockOffset-j]=-1;
+						}
+						
 					}
+					checkLast[loop]=CalcScoreboard.fetchControl;
+					loop++;
+					MMinUse=false;
+					within=false;
+					return 1;
 				}
-				//instructions before the current one
-				for(int j=1;j<=blockOffset;j++){
-					if(instNo-j<Simulator.totalInst)
-					{
-						iCache[blockNo][blockOffset-j]=instNo-j;
-					}
-					else
-					{
-						iCache[blockNo][blockOffset-j]=-1;
-					}
-					
+				else
+				{
+					iCacheMiss++;
+					MMinUse=true;
+					return 2;
 				}
-				MMinUse=false;
-				return 1;
 			}
 			else
 			{
-				iCacheMiss++;
-				MMinUse=true;
+				//main memory being used by data cache
 				return 2;
 			}
 		}
+			
 		return 0;
 	}
 }

@@ -35,61 +35,41 @@ public class Branch {
 	public static int onBranch(int instNo){
 
 		if(Simulator.memory[instNo][1].equals(ApplicationConstants.J)){
-			int uptil=-1;
 			//write to file till this point
 			if(Simulator.fetch[instNo+1]!=0){
 				//next instruction has already been fetched
 				System.out.println("next instruction has already been fetched");
 				//return 1;
 			}
-			Simulator.issue[instNo]=CalcScoreboard.fetchControl;
-			
-			CalcScoreboard.writeResultToFile(Jfound,instNo+1);
-			//search for the label
+			else{
+				return 1;
+			}
+			Simulator.issue[instNo]=Stages.branchIssue;
+			Simulator.read[instNo]=-1;
+			Simulator.execute[instNo]=-1;
+			Simulator.write[instNo]=-1;
 			for(int i=0;i<CalcScoreboard.Allfetch.size();i++){
-				if(Simulator.memory[i][0].matches(Simulator.memory[instNo][2])){
+				if(Simulator.memory[i][0].matches(Simulator.memory[instNo][4])){
 					//find the instruction associated with the label
-					Jfound=i;
+					found=i;
 					break;
 				}
 			}
 			
-			Simulator.read[instNo]=-1;
-			Simulator.execute[instNo]=-1;
-			Simulator.write[instNo]=-1;
-				for(int j=Jfound;j<Simulator.totalInst;j++){
-
-					if(Simulator.write[j]==0){
-						if(j<instNo)
-						{
-							inProgress[j]=j;
-							leftOver.put(j, Simulator.memory[j]);
-							uptil=j;
-						}
-						else
-						{
-							Simulator.fetch[j]=0;
-							Simulator.issue[j]=0;
-							Simulator.read[j]=0;
-							Simulator.execute[j]=0;
-							Simulator.write[j]=0;
-						}
-					}
-					else{
-						Simulator.fetch[j]=0;
-						Simulator.issue[j]=0;
-						Simulator.read[j]=0;
-						Simulator.execute[j]=0;
-						Simulator.write[j]=0;
-					}
-				}
-				for(int j=uptil;j<CalcScoreboard.Allfetch.size();j++){
-					leftOver.put(j, Simulator.memory[j]);
-				}
-				Stages.writeIncomplete=Jfound;
-				branchSet=true;
-				System.out.println(Stages.writeComplete+"incomp"+Stages.writeIncomplete);
-				return 1;
+			/**
+			 * found here
+			 */
+			int k=0;
+			for(int i=found;i<Simulator.totalInst;i++)
+			{
+				Simulator.memory[Simulator.totalInst+k]=Simulator.memory[found+k];
+				branchFetch.put(Simulator.totalInst+k, found+k);
+				k++;
+			}
+			Simulator.totalInst=Simulator.totalInst+k;
+			branchSet=true;
+			Status.functional();
+			return 0;
 		}
 		else{
 			//branch instructions such as BNE, BEQ
@@ -117,7 +97,6 @@ public class Branch {
 					return 1;
 				}
 				Simulator.read[instNo]=Stages.branchRead;
-				CalcScoreboard.writeResultToFile(instNo,instNo);
 				for(int i=0;i<CalcScoreboard.Allfetch.size();i++){
 					if(Simulator.memory[i][0].matches(Simulator.memory[instNo][4])){
 						//find the instruction associated with the label
@@ -157,7 +136,6 @@ public class Branch {
 					return 1;
 				}
 				Simulator.read[instNo]=Stages.branchRead;
-				CalcScoreboard.writeResultToFile(instNo,instNo);
 				for(int i=0;i<CalcScoreboard.Allfetch.size();i++){
 					if(Simulator.memory[i][0].matches(Simulator.memory[instNo][4])){
 						//find the instruction associated with the label

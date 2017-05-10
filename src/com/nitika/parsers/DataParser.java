@@ -21,11 +21,12 @@ public class DataParser {
 					//System.out.println(Integer.parseInt(line,2));
 					Simulator.data[i]=Integer.parseInt(line,2);
 					Simulator.memoryData.put(startLoc, Simulator.data[i]);
-					startLoc++;
+					startLoc+=4;
 					i++;
 				//}
 			}
 		}
+		System.out.println(Simulator.memoryData);
 		scanner.close();
 	}
 }
